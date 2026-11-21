@@ -384,12 +384,18 @@
       }
 
       function applyTheme() {
-        document.body.className = 'theme-' + (settings.theme || 'parchment');
+        const themeName = settings.theme || 'parchment';
+        document.body.className = 'theme-' + themeName;
         document.getElementById('lbl-size').textContent = settings.fontSize;
         const onLbl = lang === 'en' ? 'On' : 'Вкл';
         const offLbl = lang === 'en' ? 'Off' : 'Выкл';
         document.getElementById('toggle-hyphen').textContent = settings.hyphenation ? onLbl : offLbl;
         document.getElementById('toggle-justify').textContent = settings.justifyText ? onLbl : offLbl;
+        try {
+          if (window.AndroidThemeBridge && typeof window.AndroidThemeBridge.syncTheme === 'function') {
+            window.AndroidThemeBridge.syncTheme(themeName);
+          }
+        } catch (e) {}
       }
 
       function renderHtml(blocks) {

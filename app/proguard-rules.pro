@@ -1,1 +1,2 @@
 -keepclassmembers class com.knigabogov.reader.MainActivity { *; }
+-keepclassmembers class com.knigabogov.reader.MainActivity$* { *; }
