@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Книга Богов" />
+  <title>Книга Богов</title>
+  <style>
+    :root {
+      --bg: #F7F4EE;
+      --surface: #EFEAE0;
+      --text: #1C1917;
+      --muted: #6B655E;
+      --border: rgba(28, 25, 23, 0.14);
+      --accent: #8B261D;
+    }
+    body.theme-paper { --bg: #FFFFFF; --surface: #F5F5F4; --text: #18181B; --muted: #64748B; --border: rgba(24,24,27,0.12); --accent: #7C2D12; }
+    body.theme-sepia { --bg: #EFE6D5; --surface: #E5D9C3; --text: #2B2118; --muted: #6E5B4B; --border: rgba(43,33,24,0.16); --accent: #78350F; }
+    body.theme-night { --bg: #090B0E; --surface: #13171D; --text: #E5E0D6; --muted: #9A948A; --border: rgba(229,224,214,0.14); --accent: #D4AF63; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+    .brand { font-family: Georgia, serif; font-size: 18px; font-weight: 700; letter-spacing: 0.01em; white-space: nowrap; }
+    .nav-actions { display: flex; gap: 6px; align-items: center; }
+    button {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 13px;
+      cursor: pointer;
+      min-height: 36px;
+      touch-action: manipulation;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    body.theme-night button.primary { color: #090B0E; font-weight: 600; }
+    main { flex: 1; min-height: 0; display: flex; justify-content: center; overflow: hidden; position: relative; }
+    .page-viewport { width: 100%; max-width: 680px; height: 100%; min-height: 0; padding: 16px 20px; overflow: hidden; display: flex; flex-direction: column; }
+    .page-content { flex: 1; min-height: 0; overflow: hidden; }
+    .oracle-bar {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: none;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .oracle-bar.visible { display: flex; }
+    footer {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-size: 13px;
+      gap: 6px;
+    }
+    .meta { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
+    #apk-page-input {
+      width: 78px;
+      height: 36px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      text-align: center;
+      font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-appearance: none;
+    }
+    .drop-cap::first-letter { font-size: 3.1em; line-height: 0.8; float: left; margin-right: 0.14em; margin-top: 0.08em; font-weight: 700; color: var(--accent); }
+    .box-enc { margin: 12px 0; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .box-dos { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+    .drawer { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: flex-end; justify-content: center; z-index: 50; }
+    .drawer.open { display: flex; }
+    .sheet {
+      width: 100%;
+      max-width: 560px;
+      max-height: 85dvh;
+      background: var(--bg);
+      color: var(--text);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      border-top: 1px solid var(--border);
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+    .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  </style>
+</head>
+<body class="theme-parchment">
+  <div class="app">
+    <header>
+      <div class="brand" id="brand-title">Книга Богов</div>
+      <div class="nav-actions">
+        <div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;padding:2px;">
+          <button id="lang-ru" style="min-height:28px;padding:3px 7px;font-size:11px;border:none;">RU</button>
+          <button id="lang-en" style="min-height:28px;padding:3px 7px;font-size:11px;border:none;">ENG</button>
+        </div>
+        <button id="btn-archive">Архив</button>
+        <button id="btn-settings">Настройки</button>
+      </div>
+    </header>
+    <main id="touch-area">
+      <div class="page-viewport" id="page-viewport">
+        <div class="page-content" id="page-content"></div>
+      </div>
+    </main>
+    <div class="oracle-bar" id="oracle-bar">
+      <button id="exit-oracle" class="primary" style="padding:6px 12px;min-height:36px;font-size:12px;font-weight:600;"></button>
+    </div>
+    <footer>
+      <button id="btn-prev" aria-label="Назад">←</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="meta" id="page-meta">Стр. 1</span>
+        <input id="apk-page-input" type="number" inputmode="numeric" pattern="[0-9]*" min="1" max="10000" placeholder="1-10000" />
+        <button id="btn-jump">Открыть</button>
+      </div>
+      <button id="btn-next" class="primary" aria-label="Далее">→</button>
+    </footer>
+  </div>
+
+  <div class="drawer" id="drawer-settings">
+    <div class="sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong id="lbl-settings-title" style="font-size:17px;">Настройки чтения (Офлайн)</strong>
+        <button id="close-settings">Закрыть</button>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div id="lbl-theme-title" style="font-size:13px;color:var(--muted);">Тема страницы</div>
+        <div class="theme-grid">
+          <button data-theme="parchment" id="thm-parchment">Пергамент</button>
+          <button data-theme="paper" id="thm-paper">Бумага</button>
+          <button data-theme="sepia" id="thm-sepia">Сепия</button>
+          <button data-theme="night" id="thm-night">Ночь</button>
+        </div>
+      </div>
+      <div class="row">
+        <span><span id="lbl-font-title">Размер шрифта</span> (<span id="lbl-size">18</span>px)</span>
+        <div style="display:flex;gap:8px;">
+          <button id="size-dec">A-</button>
+          <button id="size-inc">A+</button>
+        </div>
+      </div>
+      <div class="row">
+        <span id="lbl-hyphen-title">Перенос слов по слогам</span>
+        <button id="toggle-hyphen">Вкл</button>
+      </div>
+      <div class="row">
+        <span id="lbl-justify-title">Выравнивание по ширине</span>
+        <button id="toggle-justify">Вкл</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawer-archive">
+    <div class="sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong id="lbl-archive-title" style="font-size:17px;">Энциклопедия и Досье</strong>
+        <button id="close-archive">Закрыть</button>
+      </div>
+      <div id="archive-list" style="display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.5;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const INITIAL_CHAPTERS_RU = [{"id":"chapter-1","number":1,"title":"Школа на Аэдене и зеркало Земли-18","subtitle":"О том, как восемнадцатый уровень сознания отражается в коридорах власти, корпорациях и тайных картах мира","epigraph":"«Человек видит в истории лишь марионеток на авансцене; муравей чувствует лишь тень Пальцев; но истинный Бог замечает, что сама карта может оказаться аквариумом под куполом». — Эдмон Уэллс","summary":"На острове Олимпия в Аэдене ученики-боги Мишель Пэнсон и Рауль Разорбак на 18-м уровне сознания наблюдают за современной Землёй-18. Опираясь на «Энциклопедию относительного и абсолютного знания» Эдмона Уэллса и хроники всех циклов Бернара Вербера — от «Муравьёв» и «Танатонавтов» до «Дерева возможных» и новеллы «Добро пожаловать в рай», — они исследуют связь между миром богов, теориями заговора, гипотезой Плоской земли, крупными корпорациями и политикой США, России, Китая, Израиля и Украины.","paragraphs":["Когда в аудитории восемнадцатого уровня на острове Олимпия погас искусственный закат, Мишель Пэнсон заметил, что проекция Земли-18 на мраморном столе ведёт себя странно: с высоты богов она казалась вращающимся шаром, но при приближении разворачивалась в плоский диск с ледяным кольцом по краю. Рядом Рауль Разорбак усмехался, наблюдая, как огоньки Вашингтона, Москвы, Пекина, Иерусалима и Киева перемигиваются в ночи подобно нервным узлам гигантского муравейника Бел-о-кан.","— Ты всё ещё веришь, что земные лидеры и правления мегакорпораций сами чертят свои границы? — спросил Рауль, касаясь пульсирующей линии, соединяющей кабинеты США, России, Китая, Израиля и Украины. — Внизу миллионы людей разбирают каждое слово Дональда Трампа и Владимира Путина, следят за пекинскими алгоритмами, ближневосточными узлами и транснациональными фондами, смотрят на эмблему ООН с плоской картой мира — и даже не догадываются, что за этим стоит то же самое испытание, которое описано в твоём любимом рассказе «Добро пожаловать в рай»: человеку предлагают безупречную цифровую декорацию в обмен на отказ от подлинного пробуждения.","Мишель открыл потрёпанный том «Энциклопедии относительного и абсолютного знания», оставленный Эдмоном Уэллсом рядом с записями первых танатонавтов и тетрадями о третьем человечестве. За фасадами столиц, биржевыми серверами корпораций и закрытыми антарктическими станциями в ту секунду сходились тонкие серебряные нити нового цикла, и древняя книга на кафедре сама раскрылась на следующей чистой странице."],"source":"core","createdAt":"2026-11-20T00:00:00.000Z"}];
+      const INITIAL_CHAPTERS_EN = [{"id":"chapter-1-en","number":1,"title":"The School of Aeden and the Mirror of Earth-18","subtitle":"How the eighteenth level of consciousness reflects inside corridors of power, mega-corporations, and secret maps","epigraph":"“Humans see only puppets on the stage of history; ants sense only the shadow of the Fingers; yet a true God notices that the map itself may be an aquarium beneath a dome.” — Edmond Wells","summary":"On the island of Olympia in Aeden, student gods Michael Pinson and Raoul Razorbak observe contemporary Earth-18 from the eighteenth level of consciousness. Drawing upon Edmond Wells’ Encyclopedia of Relative and Absolute Knowledge and all of Bernard Werber’s cycles—from The Ants and The Thanatonauts to The Tree of Possibilities and Welcome to Paradise—they trace hidden links between divine experiments, conspiracy architectures, Flat Earth hypotheses, mega-corporations, and the geopolitics of the USA, Russia, China, Israel, and Ukraine.","paragraphs":["When the artificial sunset faded inside the eighteenth-level lecture hall on the island of Olympia, Michael Pinson noticed something peculiar about the projection of Earth-18 resting on the marble table: from the altitude of the gods it spun as a luminous sphere, yet upon zooming in it unfolded into a flat disc ringed by an endless wall of Antarctic ice. Beside him, Raoul Razorbak smiled wryly as the lights of Washington, Moscow, Beijing, Jerusalem, and Kyiv pulsed in the dark like nerve ganglia inside the giant anthill of Bel-o-kan.","“Do you still believe earthly presidents and mega-corporation boards draw those borders on their own?” Raoul asked, tracing a glowing thread linking corridors across the United States, Russia, China, Israel, and Ukraine. “Down below, millions dissect every move by Donald Trump and Vladimir Putin, track Beijing’s algorithmic grids, Middle Eastern flashpoints, and global asset monopolies, and stare at the flat azimuthal map on the UN emblem—never realizing they are living through the same test depicted in ‘Welcome to Paradise’: trading genuine awakening for a comfortable scripted illusion.”","Michael opened the worn volume of the Encyclopedia of Relative and Absolute Knowledge left by Edmond Wells beside the first Thanatonaut logs and notes on the Third Humanity. Behind capital facades, corporate data centers, and restricted polar stations, slender silver threads of a new cycle converged at that exact second, and the ancient book on the lectern turned to its next blank page all by itself."],"source":"core","createdAt":"2026-11-20T00:00:00.000Z"}];
+      const INITIAL_ENC_RU = [{"term":"Закон восемнадцатого порога","category":"Энциклопедия · Метаистория","text":"Согласно заметкам Эдмона Уэллса, любое сложное сообщество — от термитов до сверхдержав и корпоративных холдингов — при достижении критической плотности информации порождает двойную реальность: видимую для граждан и закрытую для посвящённых. То, что на Земле называют конспирологией, является прибором ночного видения, улавливающим контуры скрытых решений раньше официальных коммюнике."},{"term":"Геометрия аквариума и спор о Плоской земле","category":"Энциклопедия · Картография сознания","text":"В азимутальной проекции с Северным полюсом в центре, ставшей символом крупнейших международных организаций, Антарктида образует замкнутое ледяное кольцо вокруг океанов. Сторонники теории Плоской земли видят в этом доказательство искусственного купола, тогда как Эдмон Уэллс писал: форма мира зависит от мерности наблюдателя — для муравья мир плоский, для ангела он сфера, для бога — шахматная партия."},{"term":"Пальцы и муравейник Бел-о-кан","category":"Энциклопедия · Этология","text":"В муравейнике из двух миллионов особей ни один муравей не видит всей картины, но колония действует как единый мозг. Когда над ним появляются «Пальцы» — существа высшего порядка, — муравьи объясняют их катаклизмом. В человеческой политике роль феромонов выполняют расчётные алгоритмы корпораций, валютные коридоры и ленты новостей."},{"term":"Парадокс новеллы «Добро пожаловать в рай»","category":"Энциклопедия · Дерево возможных","text":"В рассказе Бернара Вербера душа попадает в идеально сконструированный виртуальный рай, но постепенно обнаруживает, что комфорт без сопротивления превращает бессмертие в пустую клетку. Так же и земные корпорации мечтают подарить человечеству мягкий цифровой рай в обмен на отказ от собственной воли."}];
+      const INITIAL_ENC_EN = [{"term":"Law of the Eighteenth Threshold","category":"Encyclopedia · Metahistory","text":"According to Edmond Wells, whenever any complex community—from termite colonies to superpowers and holding empires—crosses a critical density of information, it splits into two realities: one staged for citizens and another reserved for architects. What Earth calls conspiracy theory is merely a night-vision lens catching hidden blueprints before press releases arrive."},{"term":"Aquarium Geometry & the Flat Earth Debate","category":"Encyclopedia · Cartography of Mind","text":"On the North-Pole azimuthal projection adopted by major global institutions, Antarctica forms a closed icy ring around the oceans. Modern Flat Earth theorists treat it as proof of a firmament dome, while Edmond Wells observed that geometry shifts with dimension: flat to the ant, spherical to the angel, and a chessboard to a god."},{"term":"The Fingers above Bel-o-kan","category":"Encyclopedia · Ethology","text":"Inside a city of two million ants, no single worker sees the whole blueprint, yet the colony moves as one mind. When the “Fingers” descend from above the glass terrarium, insects blame fate or rival nests. In human geopolitics, algorithmic feeds, reserve currencies, and corporate supply chains function as invisible pheromones."},{"term":"The Paradox of “Welcome to Paradise”","category":"Encyclopedia · Tree of Possibilities","text":"In Bernard Werber’s short story, a newcomer enters an immaculate simulated heaven only to realize that frictionless comfort turns eternity into a gilded cage. Global digital conglomerates dream of offering humanity the very same soft paradise in exchange for autonomous thought."}];
+      const INITIAL_DOS_RU = [{"code":"ОЛИМПИЯ-01 · ПОЛИФОНИЯ СВЕРХДЕРЖАВ","title":"США, Россия, Китай, Израиль и Украина на одной доске","text":"Наблюдение фиксирует не отдельные конфликты, а единый многоуровневый узел перенастройки мира. За публичной риторикой Вашингтона и Москвы, технологическими шагами Пекина, разведывательными и оборонными контурами Иерусалима и линией разлома в Украине прослеживается борьба транснациональных корпораций за контроль над искусственным интеллектом, чипами, энергетикой и цифровыми валютами."},{"code":"АРХИВ-18 · ДИРЕКТИВА 1959","title":"Закрытые широты и антарктический периметр","text":"На фоне тотальной спутниковой детализации городов Антарктида остаётся пространством со строгими ограничениями на частные экспедиции и маршруты перелётов. Исследователи Плоской земли и криптоисторики сходятся в одном: за ледяным барьером скрыто то, что ломает школьную картину мира."},{"code":"ПРОТОКОЛ-7 · АРХИТЕКТОРЫ РАЯ НА ЗАКАЗ","title":"Корпоративные фонды и инженерия внимания","text":"Крупнейшие инвестиционные и технологические корпорации одновременно владеют долями конкурирующих оборонных концернов, медиаимперий и лабораторий нейроинтерфейсов, превращая человечество в управляемый эксперимент по сценарию «Дерева возможных»."}];
+      const INITIAL_DOS_EN = [{"code":"OLYMPIA-01 · MULTIPOLAR LATTICE","title":"USA, Russia, China, Israel & Ukraine on One Board","text":"Observation reveals not isolated crises but one synchronized planetary realignment. Beneath public statements from Washington and Moscow, Beijing’s algorithmic statecraft, Jerusalem’s cyber-defense corridors, and Ukraine’s geopolitical faultline, transnational conglomerates compete for supremacy over semiconductors, energy, orbital constellations, and programmable currencies."},{"code":"ARCHIVE-18 · DIRECTIVE 1959","title":"Restricted Latitudes & the Antarctic Perimeter","text":"Despite millimeter-grade satellite imaging over major capitals, Antarctica remains tightly regulated against independent expeditions and Southern-hemisphere cross-polar flights. Flat Earth researchers and cryptohistorians agree on one point: something beyond the ice barrier refuses to fit inside standard textbooks."},{"code":"PROTOCOL-7 · ARCHITECTS OF BESPOKE PARADISE","title":"Mega-Funds & Attention Engineering","text":"The same handful of global asset managers holds interlocking stakes across rival defense contractors, social networks, and neuro-interface startups—turning Earth-18 into a live laboratory straight out of Werber’s Tree of Possibilities."}];
+      const DEFAULT_SETTINGS = {"language":"ru","theme":"parchment","fontFamily":"serif","fontSize":16,"lineHeight":1.68,"hyphenation":true,"justifyText":true,"dropCaps":true,"offlineOnly":true,"horizontalPadding":24};
+
+      const memStore = {};
+      function safeGet(key) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (e) {
+          return Object.prototype.hasOwnProperty.call(memStore, key) ? memStore[key] : null;
+        }
+      }
+      function safeSet(key, value) {
+        memStore[key] = value;
+        try {
+          window.localStorage.setItem(key, value);
+        } catch (e) {
+          // Ignore storage quota / sandbox restrictions on local file://
+        }
+      }
+
+      const OFFLINE_BEATS_RU = [
+        {
+          title: 'Карта ООН и ледяной барьер',
+          subtitle: 'Азимутальная проекция и споры о Плоской земле XXI века',
+          epigraph: '«Если человек не имеет права пересечь шестьдесят шестую параллель без особого пропуска, он спросит: океан ли там или край стола?» — Эдмон Уэллс',
+          paragraphs: [
+            'Рауль развернул проекцию Земли-18 в ракурсе эмблемы ООН: Северный полюс в центре, континенты расходятся веером, а по внешнему краю тянется белое кольцо Антарктиды. Мишель заметил, что с этого ракурса планета напоминает настольный аквариум под невидимым куполом.',
+            '— Вот почему современная теория Плоской земли не исчезает даже в век спутников, — сказал Рауль. — Люди проводят лазерные опыты над озёрами, изучают гироскопы самолётов и спрашивают, почему договор 1959 года закрывает глубины ледяного барьера. И заметь: ни президент США Дональд Трамп, ни президент России Владимир Путин ни разу не нарушили негласное табу на рассекречивание полных полярных съёмок.',
+            'В «Энциклопедии относительного и абсолютного знания» нашлась запись Эдмона Уэллса: для муравья стол всегда плоский, и лишь переход в высшую мерность превращает плоскость в сферу — или раскрывает стенки лаборатории богов.'
+          ],
+          enc: { term: 'Купол и эксперимент Бедфорд-Левел', category: 'Энциклопедия · Неокартография', text: 'Опыты с оптикой над водной гладью и споры о горизонтах авиационных приборов легли в основу современной гипотезы Плоской земли, которую Уэллс называл синдромом стены аквариума.' }
+        },
+        {
+          title: '«Добро пожаловать в рай» и тень корпораций',
+          subtitle: 'Новелла из «Дерева возможных», Китай, Израиль, Украина и мировое правительство фондов',
+          epigraph: '«Самая прочная тюрьма — та, чей интерьер выполнен по вашим личным пожеланиям». — Эдмон Уэллс',
+          paragraphs: [
+            'Рауль открыл новеллу Бернара Вербера «Добро пожаловать в рай»: человек попадает в идеальное посмертие, не сразу замечая корпоративные условия контракта. На Земле-18 транснациональные фонды сегодня предлагают ту же сделку — цифровой уют в обмен на свободу воли.',
+            'Между тем сфера показала четыре ключевых меридиана: Пекин с алгоритмическим порядком и битвой за чипы, Иерусалим с квантовым шифрованием и древними свитками, Украину и Чёрное море, где корпорации уже просчитывают активы будущего, а также Вашингтон и Москву.',
+            'Мишель улыбнулся, вспомнив «Смех циклопа»: любая матрица власти рассыпается перед спокойным умом, который перестал бояться.'
+          ],
+          enc: { term: 'Кросс-владение корпораций', category: 'Энциклопедия · Экономика теней', text: 'Одни и те же глобальные фонды одновременно владеют долями конкурирующих оборонных концернов, медиаимперий и лабораторий искусственного интеллекта.' }
+        },
+        {
+          title: 'Коридоры двойного смысла',
+          subtitle: 'Тайные каналы дипломатии и Бильдербергский архив',
+          epigraph: '«Тот, кто считает мир случайным набором новостей, никогда не заглядывал в черновики картографов».',
+          paragraphs: [
+            'Рауль превратил шифрованные радиоволны в тонкие серебряные нити, тянущиеся между Вашингтоном, Женевой и Москвой. Пока миллионы зрителей обсуждали очередное заявление президента США Дональда Трампа и сдержанный ответ президента России Владимира Путина, закрытые советы сверяли сценарии ближайших месяцев.',
+            'Мишель открыл «Энциклопедию» Эдмона Уэллса и вспомнил уроки «Танатонавтов» и «Империи ангелов»: за плечами политиков незримо стоят хранители и архитекторы окна Овертона, подбрасывая людям совпадения и кризисы.',
+            'На краю сферы вспыхнул алый сигнал: кто-то из старших наставников Аэдена только что изменил баланс сил на европейской доске.'
+          ],
+          enc: { term: 'Механика окна Овертона', category: 'Энциклопедия · Конспирология', text: 'Скрытые сети власти используют информационный шум и ступени допустимости для маскировки реальных решений по энергетике, цифровым валютам и орбитальной связи.' }
+        },
+        {
+          title: 'Пальцы над муравейником',
+          subtitle: 'Архитектура Бел-о-кана, проект «Голубой луч» и дофаминовый код',
+          epigraph: '«Муравей не способен представить лицо энтомолога, но точно знает вкус его капли мёда». — Эдмон Уэллс',
+          paragraphs: [
+            'Проекция приблизила мегаполисы Земли-18, неотличимые от феромонных троп из хроник «Муравьёв» Вербера: те же разведчики и солдаты у банковских хранилищ. На орбите тем временем пролетали тысячи микроспутников, напоминающих сценарий проекта «Голубой луч» для голографических знамений в небе.',
+            '— Тот, кто управляет дофамином толпы и окном Овертона, сильнее любого президента, — заметил Мишель, вспоминая формулу из «Последнего секрета». — Пока люди спорят о форме Земли, выборах и санкциях, технологические консорциумы борются за прямой доступ к вниманию человечества.',
+            'Рауль поставил фигурку сфинкса на границу карты: в Школе богов приближался главный экзамен на звание настоящего Творца.'
+          ],
+          dos: { code: 'ДОСЬЕ-18 · СЕВЕРНЫЙ ПЕРИМЕТР', title: 'Скрытые протоколы и личная воля', text: 'Прямые неформальные контакты лидеров США и России регулярно ломают расчётные матрицы глобальных аналитических центров, несмотря на плотность алгоритмического контроля.' }
+        },
+        {
+          title: 'Звёздная бабочка и третье человечество',
+          subtitle: 'Ковчеги элит, микролюди Эдмона Уэллса и «Цивилизация на дне чашки»',
+          epigraph: '«Боги не уходят на пенсию — они просто уменьшают масштаб эксперимента». — Эдмон Уэллс',
+          paragraphs: [
+            'Афина открыла на столе модель «Звёздной бабочки» — парусного звездолёта, на котором избранные мечтают улететь от земных кризисов, и тут же рядом поставила чашку из рассказа «Цивилизация на дне чашки». Оказалось, что даже самые изощрённые технологические ковчеги повторяют ошибки тех, кто не научился жить в мире с собственным умом.',
+            'Между тем алгоритмы Израиля и мегакорпораций Кремниевой долины спорили за квантовые ключи памяти, а инженеры Китая и европейские консорциумы тестировали миниатюрные биосенсоры, о которых когда-то грезили герои «Третьего человечества».'
+          ],
+          enc: { term: 'Синдром Звёздной бабочки', category: 'Энциклопедия · Вербер', text: 'Любой побег на новый континент или другую планету обречён повторить старую историю, если пассажиры берут в багаж те же страхи и жажду власти.' }
+        }
+      ];
+
+      const OFFLINE_BEATS_EN = [
+        {
+          title: '“Welcome to Paradise” & Corporate Shadows',
+          subtitle: 'Werber’s Tree of Possibilities meets Beijing, Jerusalem, Kyiv, Washington & Moscow',
+          epigraph: '“The strongest prison is one designed around your own wish list.” — Edmond Wells',
+          paragraphs: [
+            'Raoul read from Werber’s “Welcome to Paradise” while Earth-18 highlighted silicon labs in the USA and China, quantum-defense corridors in Israel, corporate asset grids around Ukraine, and closed investment funds holding shares across every side.',
+            'Athena reminded the classroom of Bel-o-kan and ant 103683rd: whether Earth is viewed as a sphere or a flat disc under a dome, real freedom begins the instant one lucid mind steps outside the scripted pheromone track.'
+          ],
+          enc: { term: 'The Managed Paradise Trap', category: 'Encyclopedia · Werber', text: 'Frictionless digital comfort replaces autonomous choice whenever citizens surrender attention to corporate algorithms.' }
+        },
+        {
+          title: 'The UN Map and the Ice Wall',
+          subtitle: 'Azimuthal projections, restricted latitudes, and the 21st-century Flat Earth debate',
+          epigraph: '“If humans are forbidden from crossing the sixty-sixth parallel without clearance, they will ask whether it is an ocean or the rim of a table.” — Edmond Wells',
+          paragraphs: [
+            'Earth-18 froze in the exact azimuthal layout engraved on the United Nations flag: North Pole at center, continents fanning outward, and Antarctica ringing the edge. Neither Donald Trump nor Vladimir Putin has ever lifted the silent curtain over full unedited polar flight surveys.',
+            'Michael opened Edmond Wells’ Encyclopedia: to an ant crawling across mahogany, the tabletop is infinite and flat; only stepping up one dimension reveals the glass rim of the gods’ laboratory.'
+          ],
+          enc: { term: 'Bedford Level & Dome Hypothesis', category: 'Encyclopedia · Neocartography', text: 'Nineteenth-century optical tests over still canals sparked modern doubts that Edmond Wells called Aquarium Wall Syndrome.' }
+        },
+        {
+          title: 'Laughter of the Cyclops & the Dragon Grid',
+          subtitle: 'Algorithmic capitals, quantum scrolls, and calm irony dissolving fear',
+          epigraph: '“Every conspiracy loses power the second the spectator stops trembling and smiles.” — Edmond Wells',
+          paragraphs: [
+            'Recalling Butterfly of the Stars, Third Humanity, and Laughter of the Cyclops, Michael noticed that billionaires building bunkers or solar-sail arks carry old fears wherever they fly, while Beijing’s digital architecture and Tel Aviv’s encryption corridors race for the next threshold.',
+            'Raoul set his silver Thanatonaut compass beside the globe: co-authoring the next page belongs to anyone awake enough to ask honest questions.'
+          ],
+          dos: { code: 'DOSSIER-18 · ANTI-MATRIX', title: 'Sovereignty of Attention', text: 'Cross-border mega-funds steer headlines more subtly than treaties, yet lucid humor breaks predictive crowd control.' }
+        }
+      ];
+
+      let settings = DEFAULT_SETTINGS;
+      try {
+        const storedSettings = JSON.parse(safeGet('kb_apk_settings') || 'null');
+        if (storedSettings && typeof storedSettings === 'object') {
+          settings = Object.assign({}, DEFAULT_SETTINGS, storedSettings);
+        }
+      } catch (e) {}
+
+      let lang = settings.language === 'en' ? 'en' : 'ru';
+      function getSavedChapters(targetLang) {
+        try {
+          const raw = safeGet(targetLang === 'en' ? 'kb_apk_chapters_en' : 'kb_apk_chapters');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch (e) {}
+        return JSON.parse(JSON.stringify(targetLang === 'en' ? INITIAL_CHAPTERS_EN : INITIAL_CHAPTERS_RU));
+      }
+
+      let chapters = getSavedChapters(lang);
+      let pageIndex = Number(safeGet(lang === 'en' ? 'kb_apk_page_en' : 'kb_apk_page') || '0') || 0;
+      let genOffset = Number(safeGet(lang === 'en' ? 'kb_apk_gen_en' : 'kb_apk_gen') || '0') || 0;
+      let pages = [];
+
+      const RU_VOWELS = new Set('аеёиоуыэюяАЕЁИОУЫЭЮЯ'.split(''));
+      const RU_ATTACH = new Set('йьъЙЬЪ'.split(''));
+      function hyphenateRuWord(w) {
+        if (w.length < 5 || !/^[а-яА-ЯёЁ]+$/.test(w)) return w;
+        const c = w.split(''); const v = [];
+        for (let i = 0; i < c.length; i++) if (RU_VOWELS.has(c[i])) v.push(i);
+        if (v.length < 2) return w;
+        const bp = new Set();
+        for (let i = 0; i < v.length - 1; i++) {
+          const s = v[i], e = v[i+1], gap = e - s - 1;
+          let at = gap === 0 ? s + 1 : gap === 1 ? (RU_ATTACH.has(c[s+1]) ? s + 2 : s + 1) : s + 2;
+          if (at >= 2 && c.length - at >= 2 && !RU_ATTACH.has(c[at])) bp.add(at);
+        }
+        return c.map((ch, idx) => (bp.has(idx) ? '\u00AD' + ch : ch)).join('');
+      }
+      const EN_VOWELS = new Set('aeiouyAEIOUY'.split(''));
+      function hyphenateEnWord(w) {
+        if (w.length < 6 || !/^[a-zA-Z]+$/.test(w)) return w;
+        const c = w.split(''); const v = [];
+        for (let i = 0; i < c.length; i++) {
+          if (EN_VOWELS.has(c[i]) && (i === 0 || !EN_VOWELS.has(c[i-1]))) v.push(i);
+        }
+        if (v.length < 2) return w;
+        const bp = new Set();
+        for (let i = 0; i < v.length - 1; i++) {
+          const s = v[i], e = v[i+1], gap = e - s - 1;
+          const at = gap >= 2 ? s + 2 : s + 1;
+          if (at >= 2 && c.length - at >= 3) bp.add(at);
+        }
+        return c.map((ch, idx) => (bp.has(idx) ? '\u00AD' + ch : ch)).join('');
+      }
+      function hyph(text) {
+        if (!settings.hyphenation) return text;
+        if (lang === 'en') return text.replace(/[a-zA-Z]{6,}/g, hyphenateEnWord);
+        return text.replace(/[а-яА-ЯёЁ]{5,}/g, hyphenateRuWord);
+      }
+
+      function applyTheme() {
+        document.body.className = 'theme-' + (settings.theme || 'parchment');
+        document.getElementById('lbl-size').textContent = settings.fontSize;
+        const onLbl = lang === 'en' ? 'On' : 'Вкл';
+        const offLbl = lang === 'en' ? 'Off' : 'Выкл';
+        document.getElementById('toggle-hyphen').textContent = settings.hyphenation ? onLbl : offLbl;
+        document.getElementById('toggle-justify').textContent = settings.justifyText ? onLbl : offLbl;
+      }
+
+      function renderHtml(blocks) {
+        const align = settings.justifyText ? 'justify' : 'left';
+        const hyp = settings.hyphenation ? 'manual' : 'none';
+        const chapWord = lang === 'en' ? 'Chapter ' : 'Глава ';
+        const predWord = lang === 'en' ? 'Prediction · Page ' : 'Предсказание · Стр. ';
+        return blocks.map(b => {
+          if (b.kind === 'header') {
+            const topMeta = b.isOracle ? (predWord + b.number) : (chapWord + b.number);
+            return '<div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);"><div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">' + topMeta + '</div><h2 style="font-size:' + Math.round(settings.fontSize * 1.4) + 'px;margin:0 0 6px 0;line-height:1.15;">' + b.title + '</h2><div style="font-size:13px;color:var(--muted);">' + (b.subtitle || '') + '</div>' + (b.epigraph ? '<div style="font-style:italic;font-size:13px;color:var(--muted);margin-top:8px;">' + b.epigraph + '</div>' : '') + '</div>';
+          }
+          if (b.kind === 'enc') {
+            return '<div class="box-enc"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">' + b.category + '</div><div style="font-weight:700;margin:4px 0;">' + b.term + '</div><p style="margin:0;font-size:' + (settings.fontSize - 1) + 'px;line-height:1.5;text-align:' + align + ';hyphens:' + hyp + ';-webkit-hyphens:' + hyp + ';">' + hyph(b.text) + '</p></div>';
+          }
+          if (b.kind === 'dos') {
+            return '<div class="box-dos"><div style="font-family:monospace;font-size:11px;color:var(--muted);">' + b.code + '</div><div style="font-weight:700;margin:4px 0;">' + b.title + '</div><p style="margin:0;font-size:' + (settings.fontSize - 1) + 'px;line-height:1.5;text-align:' + align + ';hyphens:' + hyp + ';-webkit-hyphens:' + hyp + ';">' + hyph(b.text) + '</p></div>';
+          }
+          const indent = b.cont ? '0' : '1.4em';
+          return '<p class="' + (!b.cont && b.first ? 'drop-cap' : '') + '" style="margin:0 0 0.8em 0;font-size:' + settings.fontSize + 'px;line-height:' + (settings.lineHeight || 1.65) + ';text-align:' + align + ';hyphens:' + hyp + ';-webkit-hyphens:' + hyp + ';text-indent:' + (!b.cont && b.first ? '0' : indent) + ';">' + hyph(b.text) + '</p>';
+        }).join('');
+      }
+
+      function paginate() {
+        const box = document.getElementById('page-content');
+        const w = box.clientWidth;
+        const h = box.clientHeight;
+        if (w < 100 || h < 100) return;
+
+        const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;left:-99999px;top:0;width:' + w + 'px;visibility:hidden;';
+        document.body.appendChild(m);
+        const fits = (cand) => { m.innerHTML = renderHtml(cand); return m.scrollHeight <= h + 2; };
+
+        const out = [];
+        let cur = [];
+        chapters.forEach((ch) => {
+          if (cur.length > 0) { out.push(cur); cur = []; }
+          cur.push({ kind: 'header', number: ch.number, title: ch.title, subtitle: ch.subtitle, epigraph: ch.epigraph });
+          ch.paragraphs.forEach((p, idx) => {
+            const words = p.trim().split(/\s+/);
+            let pos = 0;
+            while (pos < words.length) {
+              const rem = words.slice(pos);
+              const full = { kind: 'p', text: rem.join(' '), cont: pos > 0, first: idx === 0 };
+              if (fits([...cur, full])) { cur.push(full); break; }
+              let lo = 1, hi = rem.length - 1, best = 0;
+              while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                if (fits([...cur, { kind: 'p', text: rem.slice(0, mid).join(' '), cont: pos > 0, first: idx === 0 }])) {
+                  best = mid; lo = mid + 1;
+                } else { hi = mid - 1; }
+              }
+              if (best < 3 && cur.length > 0) { out.push(cur); cur = []; continue; }
+              if (best === 0) best = 1;
+              if (rem.length - best === 1 && best > 3) best--;
+              cur.push({ kind: 'p', text: rem.slice(0, best).join(' '), cont: pos > 0, first: idx === 0 });
+              pos += best;
+              out.push(cur); cur = [];
+            }
+            if (idx === 1 && ch.encyclopediaEntry) {
+              const enc = { kind: 'enc', ...ch.encyclopediaEntry };
+              if (fits([...cur, enc])) cur.push(enc); else { out.push(cur); cur = [enc]; }
+            }
+          });
+          if (ch.dossierNote) {
+            const dos = { kind: 'dos', ...ch.dossierNote };
+            if (fits([...cur, dos])) cur.push(dos); else { out.push(cur); cur = [dos]; }
+          }
+        });
+        if (cur.length > 0) out.push(cur);
+        document.body.removeChild(m);
+        pages = out;
+        if (pageIndex >= pages.length) pageIndex = Math.max(0, pages.length - 1);
+        if (oracleNum !== null) {
+          openOracle(oracleNum, true);
+        } else {
+          drawPage();
+        }
+      }
+
+      function drawPage() {
+        document.getElementById('oracle-bar').classList.remove('visible');
+        const box = document.getElementById('page-content');
+        box.innerHTML = renderHtml(pages[pageIndex] || []);
+        document.getElementById('page-meta').textContent = (lang === 'en' ? 'Page ' : 'Стр. ') + (pageIndex + 1) + (lang === 'en' ? ' / ' : ' / ') + Math.max(1, pages.length);
+        document.getElementById('btn-prev').disabled = pageIndex === 0;
+        safeSet(lang === 'en' ? 'kb_apk_page_en' : 'kb_apk_page', String(pageIndex));
+      }
+
+      function generateNextPage() {
+        const pool = lang === 'en' ? OFFLINE_BEATS_EN : OFFLINE_BEATS_RU;
+        const beat = pool[genOffset % pool.length];
+        genOffset++;
+        const last = chapters[chapters.length - 1];
+        if (last.paragraphs.length >= 9) {
+          chapters.push({
+            id: 'ch-' + lang + '-' + (last.number + 1),
+            number: last.number + 1,
+            title: beat.title,
+            subtitle: beat.subtitle,
+            epigraph: beat.epigraph,
+            paragraphs: [...beat.paragraphs],
+            encyclopediaEntry: beat.enc,
+            dossierNote: beat.dos
+          });
+        } else {
+          last.paragraphs = last.paragraphs.concat(beat.paragraphs);
+          if (beat.enc && !last.encyclopediaEntry) last.encyclopediaEntry = beat.enc;
+          if (beat.dos && !last.dossierNote) last.dossierNote = beat.dos;
+        }
+        safeSet(lang === 'en' ? 'kb_apk_chapters_en' : 'kb_apk_chapters', JSON.stringify(chapters));
+        safeSet(lang === 'en' ? 'kb_apk_gen_en' : 'kb_apk_gen', String(genOffset));
+        const prevLen = pages.length;
+        paginate();
+        pageIndex = Math.min(pages.length - 1, prevLen);
+        drawPage();
+      }
+
+      const ORACLE_INSIGHTS = [
+        'В основе вашего вопроса сейчас лежит выбор между контролем и готовностью отпустить отжившую форму',
+        'Ситуация созрела быстрее, чем кажется, но главная перемена пока скрыта за кулисами чужих интересов',
+        'То, что выглядит как случайная задержка, бережёт вас от преждевременного шага',
+        'Перед вами ловушка навязанного выбора «или-или», хотя настоящий выход лежит в третьем направлении',
+        'Ответ уже есть в вашем внутреннем знании, которое заглушается тревогой и чужими советами',
+        'Равновесие сдвигается в вашу пользу именно тогда, когда вы перестаёте спорить и начинаете наблюдать',
+        'Сейчас слишком много информационного шума, созданного ради того, чтобы сбить ваш ориентир',
+        'Повторяющаяся ситуация возвращается лишь для того, чтобы вы ответили на неё по-новому',
+        'Главный ресурс в задуманном деле — не скорость и напор, а точное знание нужного часа',
+        'Вы недооцениваете силу одного тихого, самостоятельного шага, который можете сделать сегодня'
+      ];
+      const ORACLE_METAPHORS = [
+        'словно муравей 103683-й, сошедший с чужого феромонного следа ради собственной тропы',
+        'подобно танатонавту, держащемуся за серебряную нить ясности в тумане',
+        'как наблюдатель на Олимпии, различающий нити за спинами земных марионеток',
+        'как человек у ледяной стены Антарктиды, видящий проход за запретной чертой',
+        'будто герой «Добро пожаловать в рай», вовремя прочитавший мелкий шрифт договора',
+        'словно стрелка гироскопа, сохраняющая направление вопреки качке на палубе',
+        'как хранитель редкого тома Энциклопедии, знающий цену одной сноске на полях',
+        'словно стратег на шахматной доске, находящий ход за пределами привычной атаки',
+        'будто ангел совпадений, превращающий паузу в идеальную точку встречи',
+        'как путник, вышедший к краю аквариума и понявший, что стекло держится на сомнениях'
+      ];
+      const ORACLE_IMPERATIVES = [
+        'Отложите громкие решения на пару дней и наблюдайте, кто первым выдаст свой истинный мотив.',
+        'Примите тихое самостоятельное решение без оглядки на одобрение посторонних.',
+        'Проверьте факты своими глазами и не верьте ни пугающим прогнозам, ни сладким речам.',
+        'Закройте один старый незавершённый вопрос, прежде чем начинать новую гонку.',
+        'Отключите информационный шум хотя бы на сутки — в тишине верный шаг станет очевиден.',
+        'Действуйте выверенными малыми шагами, не раскрывая замысел раньше времени.',
+        'Задайте прямой и честный вопрос там, где все ходят вокруг да около.',
+        'Отпустите то, что держится лишь страхом потери, и переведите взгляд на новый горизонт.'
+      ];
+      const ORACLE_INSIGHTS_EN = [
+        'At the heart of your question lies a tension between control and letting an outgrown form dissolve',
+        'The hidden balance tips in your favor the moment you stop arguing loudly and observe patterns calmly',
+        'What looks like a delay is quietly shielding you from stepping too soon into fog',
+        'You are facing a scripted either-or trap while the true solution lies along a third path',
+        'Your strongest lever right now is timing, not brute speed'
+      ];
+      const ORACLE_METAPHORS_EN = [
+        'like ant 103683rd stepping off the collective pheromone track to blaze its own trail',
+        'like a Thanatonaut holding fast to the silver cord of lucidity through thickening mist',
+        'like the hero of “Welcome to Paradise” reading the fine print before signing away wonder',
+        'like an observer in Aeden noticing the strings behind towering earthly puppets'
+      ];
+      const ORACLE_IMPERATIVES_EN = [
+        'Hold dramatic announcements for two days and watch who reveals their true motive first.',
+        'Take one quiet, autonomous step today without waiting for permission.',
+        'Mute background noise for a day; in silence the right move becomes clear.',
+        'Ask one direct, honest question where everyone else speaks in riddles.'
+      ];
+
+      let oracleNum = null;
+      let oracleChapter = null;
+      let oraclePages = [];
+      let oracleSub = 0;
+      let oracleNonce = 0;
+      let oracleReturnPageIndex = null;
+      let oracleHistory = { b: [], i: [], m: [], p: [] };
+      try {
+        const savedHist = JSON.parse(safeGet('kb_apk_oracle_hist') || 'null');
+        if (savedHist && Array.isArray(savedHist.b)) oracleHistory = savedHist;
+      } catch (e) {}
+
+      function pickApkUnused(len, arr, seed) {
+        if (arr.length >= len) arr.length = 0;
+        const used = new Set(arr); const pool = [];
+        for (let k = 0; k < len; k++) if (!used.has(k)) pool.push(k);
+        const idx = pool[Math.abs(seed) % pool.length];
+        arr.push(idx); return idx;
+      }
+
+      function returnToApkBook() {
+        const resumeIdx = oracleReturnPageIndex !== null ? oracleReturnPageIndex : pageIndex;
+        oracleNum = null;
+        oracleChapter = null;
+        oracleReturnPageIndex = null;
+        pageIndex = Math.max(0, Math.min(pages.length - 1, resumeIdx));
+        drawPage();
+      }
+      document.getElementById('exit-oracle').onclick = returnToApkBook;
+
+      function openOracle(n, keepExistingChapter) {
+        if (oracleNum === null) {
+          oracleReturnPageIndex = pageIndex;
+        }
+        const clamped = Math.max(1, Math.min(10000, n));
+        if (!keepExistingChapter || !oracleChapter) {
+          oracleNonce++;
+          const seed = clamped * 131 + oracleNonce * 7919 + Date.now();
+          const beatsPool = lang === 'en' ? OFFLINE_BEATS_EN : OFFLINE_BEATS_RU;
+          const insPool = lang === 'en' ? ORACLE_INSIGHTS_EN : ORACLE_INSIGHTS;
+          const metPool = lang === 'en' ? ORACLE_METAPHORS_EN : ORACLE_METAPHORS;
+          const impPool = lang === 'en' ? ORACLE_IMPERATIVES_EN : ORACLE_IMPERATIVES;
+          const beat = beatsPool[pickApkUnused(beatsPool.length, oracleHistory.b, seed)];
+          const ins = insPool[pickApkUnused(insPool.length, oracleHistory.i, seed >> 3)];
+          const met = metPool[pickApkUnused(metPool.length, oracleHistory.m, seed >> 5)];
+          const imp = impPool[pickApkUnused(impPool.length, oracleHistory.p, seed >> 7)];
+          safeSet('kb_apk_oracle_hist', JSON.stringify(oracleHistory));
+          oracleChapter = {
+            number: clamped,
+            title: beat.title,
+            subtitle: beat.subtitle,
+            paragraphs: [
+              beat.paragraphs[0],
+              (lang === 'en' ? 'Number ' + clamped + ' opens a turning point. ' : 'Число ' + clamped + ' открывает узел размышления. ') + ins + ' — ' + met + '. ' + imp
+            ],
+            encyclopediaEntry: beat.enc,
+            dossierNote: beat.dos
+          };
+        }
+        oracleNum = clamped;
+        const box = document.getElementById('page-content');
+        const w = box.clientWidth, h = box.clientHeight;
+        if (w < 100 || h < 100) return;
+        const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;left:-99999px;top:0;width:' + w + 'px;visibility:hidden;';
+        document.body.appendChild(m);
+        const fits = (cand) => { m.innerHTML = renderHtml(cand); return m.scrollHeight <= h + 2; };
+        const out = []; let cur = [{ kind: 'header', isOracle: true, number: oracleChapter.number, title: oracleChapter.title, subtitle: oracleChapter.subtitle }];
+        oracleChapter.paragraphs.forEach((p, idx) => {
+          const words = p.trim().split(/\s+/); let pos = 0;
+          while (pos < words.length) {
+            const rem = words.slice(pos);
+            const full = { kind: 'p', text: rem.join(' '), cont: pos > 0, first: idx === 0 };
+            if (fits([...cur, full])) { cur.push(full); break; }
+            let lo = 1, hi = rem.length - 1, best = 0;
+            while (lo <= hi) {
+              const mid = (lo + hi) >> 1;
+              if (fits([...cur, { kind: 'p', text: rem.slice(0, mid).join(' '), cont: pos > 0, first: idx === 0 }])) { best = mid; lo = mid + 1; } else { hi = mid - 1; }
+            }
+            if (best < 3 && cur.length > 0) { out.push(cur); cur = []; continue; }
+            if (best === 0) best = 1;
+            cur.push({ kind: 'p', text: rem.slice(0, best).join(' '), cont: pos > 0, first: idx === 0 });
+            pos += best; out.push(cur); cur = [];
+          }
+        });
+        if (cur.length > 0) out.push(cur);
+        document.body.removeChild(m);
+        oraclePages = out;
+        if (!keepExistingChapter || oracleSub >= oraclePages.length) oracleSub = 0;
+        drawOracle();
+      }
+
+      function drawOracle() {
+        const resumeNum = (oracleReturnPageIndex !== null ? oracleReturnPageIndex : pageIndex) + 1;
+        const resumeLabel = lang === 'en' ? '← Back to reading · p. ' + resumeNum : '← Вернуться к чтению · стр. ' + resumeNum;
+        document.getElementById('exit-oracle').textContent = resumeLabel;
+        document.getElementById('oracle-bar').classList.add('visible');
+        const box = document.getElementById('page-content');
+        box.innerHTML = renderHtml(oraclePages[oracleSub] || []);
+        document.getElementById('page-meta').textContent = (lang === 'en' ? 'Page ' : 'Стр. ') + oracleNum;
+        document.getElementById('btn-prev').disabled = oracleNum <= 1 && oracleSub === 0;
+      }
+
+      function applyApkLanguageUI() {
+        const title = lang === 'en' ? 'Book of Gods' : 'Книга Богов';
+        document.documentElement.lang = lang;
+        document.title = title;
+        document.getElementById('brand-title').textContent = title;
+        document.getElementById('btn-archive').textContent = lang === 'en' ? 'Index' : 'Архив';
+        document.getElementById('btn-settings').textContent = lang === 'en' ? 'Settings' : 'Настройки';
+        document.getElementById('btn-jump').textContent = lang === 'en' ? 'Open' : 'Открыть';
+        document.getElementById('lbl-settings-title').textContent = lang === 'en' ? 'Reading Settings (Offline)' : 'Настройки чтения (Офлайн)';
+        document.getElementById('close-settings').textContent = lang === 'en' ? 'Close' : 'Закрыть';
+        document.getElementById('lbl-theme-title').textContent = lang === 'en' ? 'Page Theme' : 'Тема страницы';
+        document.getElementById('thm-parchment').textContent = lang === 'en' ? 'Parchment' : 'Пергамент';
+        document.getElementById('thm-paper').textContent = lang === 'en' ? 'Paper' : 'Бумага';
+        document.getElementById('thm-sepia').textContent = lang === 'en' ? 'Sepia' : 'Сепия';
+        document.getElementById('thm-night').textContent = lang === 'en' ? 'Night' : 'Ночь';
+        document.getElementById('lbl-font-title').textContent = lang === 'en' ? 'Font Size' : 'Размер шрифта';
+        document.getElementById('lbl-hyphen-title').textContent = lang === 'en' ? 'Syllable Hyphenation' : 'Перенос слов по слогам';
+        document.getElementById('lbl-justify-title').textContent = lang === 'en' ? 'Justified Text' : 'Выравнивание по ширине';
+        document.getElementById('lbl-archive-title').textContent = lang === 'en' ? 'Encyclopedia & Dossiers' : 'Энциклопедия и Досье';
+        document.getElementById('close-archive').textContent = lang === 'en' ? 'Close' : 'Закрыть';
+        const ruBtn = document.getElementById('lang-ru');
+        const enBtn = document.getElementById('lang-en');
+        ruBtn.className = lang === 'ru' ? 'primary' : '';
+        enBtn.className = lang === 'en' ? 'primary' : '';
+        ruBtn.style.cssText = 'min-height:28px;padding:3px 7px;font-size:11px;border:none;';
+        enBtn.style.cssText = 'min-height:28px;padding:3px 7px;font-size:11px;border:none;';
+        applyTheme();
+      }
+
+      function switchApkLanguage(nextLang) {
+        if (nextLang === lang) return;
+        lang = nextLang;
+        settings.language = lang;
+        safeSet('kb_apk_settings', JSON.stringify(settings));
+        oracleNum = null;
+        oracleChapter = null;
+        oracleReturnPageIndex = null;
+        chapters = getSavedChapters(lang);
+        pageIndex = Number(safeGet(lang === 'en' ? 'kb_apk_page_en' : 'kb_apk_page') || '0') || 0;
+        genOffset = Number(safeGet(lang === 'en' ? 'kb_apk_gen_en' : 'kb_apk_gen') || '0') || 0;
+        applyApkLanguageUI();
+        paginate();
+      }
+      document.getElementById('lang-ru').onclick = () => switchApkLanguage('ru');
+      document.getElementById('lang-en').onclick = () => switchApkLanguage('en');
+
+      function triggerJump() {
+        const inp = document.getElementById('apk-page-input');
+        const val = parseInt(inp.value, 10);
+        if (!val || val < 1) return;
+        const clamped = Math.min(10000, val);
+        inp.value = '';
+        inp.blur();
+        setTimeout(() => openOracle(clamped, false), 140);
+      }
+      document.getElementById('btn-jump').onclick = triggerJump;
+      document.getElementById('apk-page-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); triggerJump(); }
+      });
+
+      document.getElementById('btn-prev').onclick = () => {
+        if (oracleNum !== null) {
+          if (oracleSub > 0) { oracleSub--; drawOracle(); }
+          else if (oracleNum <= 1) { returnToApkBook(); }
+          else { openOracle(oracleNum - 1, false); }
+          return;
+        }
+        if (pageIndex > 0) { pageIndex--; drawPage(); }
+      };
+      document.getElementById('btn-next').onclick = () => {
+        if (oracleNum !== null) {
+          if (oracleSub < oraclePages.length - 1) { oracleSub++; drawOracle(); }
+          else if (oracleNum < 10000) { openOracle(oracleNum + 1, false); }
+          return;
+        }
+        if (pageIndex < pages.length - 1) { pageIndex++; drawPage(); } else { generateNextPage(); }
+      };
+
+      let touchX = 0;
+      const touchEl = document.getElementById('touch-area');
+      touchEl.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; }, { passive: true });
+      touchEl.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (dx < -45) document.getElementById('btn-next').click();
+        else if (dx > 45) document.getElementById('btn-prev').click();
+      }, { passive: true });
+
+      document.getElementById('btn-settings').onclick = () => document.getElementById('drawer-settings').classList.add('open');
+      document.getElementById('close-settings').onclick = () => document.getElementById('drawer-settings').classList.remove('open');
+      document.getElementById('btn-archive').onclick = () => {
+        const list = document.getElementById('archive-list');
+        const encList = lang === 'en' ? INITIAL_ENC_EN : INITIAL_ENC_RU;
+        const dosList = lang === 'en' ? INITIAL_DOS_EN : INITIAL_DOS_RU;
+        list.innerHTML = encList.map(e => '<div class="box-enc"><strong>' + e.term + '</strong><div>' + e.text + '</div></div>').join('') +
+          dosList.map(d => '<div class="box-dos"><strong>' + d.title + '</strong><div>' + d.text + '</div></div>').join('');
+        document.getElementById('drawer-archive').classList.add('open');
+      };
+      document.getElementById('close-archive').onclick = () => document.getElementById('drawer-archive').classList.remove('open');
+
+      document.querySelectorAll('[data-theme]').forEach(btn => {
+        btn.onclick = () => { settings.theme = btn.dataset.theme; safeSet('kb_apk_settings', JSON.stringify(settings)); applyTheme(); };
+      });
+      document.getElementById('size-dec').onclick = () => { settings.fontSize = Math.max(15, settings.fontSize - 1); safeSet('kb_apk_settings', JSON.stringify(settings)); applyTheme(); paginate(); };
+      document.getElementById('size-inc').onclick = () => { settings.fontSize = Math.min(24, settings.fontSize + 1); safeSet('kb_apk_settings', JSON.stringify(settings)); applyTheme(); paginate(); };
+      document.getElementById('toggle-hyphen').onclick = () => { settings.hyphenation = !settings.hyphenation; safeSet('kb_apk_settings', JSON.stringify(settings)); applyTheme(); paginate(); };
+      document.getElementById('toggle-justify').onclick = () => { settings.justifyText = !settings.justifyText; safeSet('kb_apk_settings', JSON.stringify(settings)); applyTheme(); paginate(); };
+
+      let resizeTimer;
+      const handleResize = () => {
+        const activeId = document.activeElement && document.activeElement.id;
+        const box = document.getElementById('page-content');
+        if (activeId === 'apk-page-input' && box && box.clientHeight < 420) return;
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(paginate, 120);
+      };
+      window.addEventListener('resize', handleResize);
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', handleResize);
+
+      applyApkLanguageUI();
+      setTimeout(paginate, 50);
+    })();
+  </script>
+</body>
+</html>
